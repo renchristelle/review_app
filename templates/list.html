@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}{{ run_name }} — Revue Fiches Hôtels{% endblock %}
+
+{% block content %}
+<div class="list-page">
+  <div class="list-header">
+    <a href="/" class="back-link">← Tous les runs</a>
+    <h1 class="list-header__title">{{ run_name }}</h1>
+    {% if current_reviewer %}
+    <span class="reviewer-badge">{{ current_reviewer }}</span>
+    {% endif %}
+  </div>
+
+  <div class="filter-bar">
+    <a href="?reviewer={{ current_reviewer }}&filter=all"
+       class="filter-btn {% if filter == 'all' %}filter-btn--active{% endif %}">
+      Tous ({{ counts.all }})
+    </a>
+    <a href="?reviewer={{ current_reviewer }}&filter=todo"
+       class="filter-btn {% if filter == 'todo' %}filter-btn--active{% endif %}">
+      À noter ({{ counts.todo }})
+    </a>
+    <a href="?reviewer={{ current_reviewer }}&filter=done"
+       class="filter-btn {% if filter == 'done' %}filter-btn--active{% endif %}">
+      Notés ({{ counts.done }})
+    </a>
+  </div>
+
+  {% if not current_reviewer %}
+  <div class="alert alert--blocking">⚠ Sélectionnez votre nom (« Je suis : ») pour voir et enregistrer vos votes.</div>
+  {% endif %}
+
+  {% if hotels %}
+  <ul class="hotel-list">
+    {% for hotel in hotels %}
+    <li class="hotel-card {% if hotel.complete %}hotel-card--done{% endif %}">
+      <a href="/{{ run_name }}/{{ hotel.trace_id }}?reviewer={{ current_reviewer }}" class="hotel-card__link">
+        <div class="hotel-card__status">
+          {% if hotel.complete %}
+          <span class="status-icon status-icon--done" title="Noté">✓</span>
+          {% else %}
+          <span class="status-icon status-icon--todo" title="À noter">○</span>
+          {% endif %}
+        </div>
+        <div class="hotel-card__info">
+          <span class="hotel-card__name">{{ hotel.hotel_name }}</span>
+          {% if hotel.ville or hotel.pays %}
+          <span class="hotel-card__location">{{ hotel.ville }}{% if hotel.ville and hotel.pays %}, {% endif %}{{ hotel.pays }}</span>
+          {% endif %}
+        </div>
+        <div class="hotel-card__progress">
+          <span class="hotel-card__count {% if hotel.complete %}hotel-card__count--done{% endif %}">
+            {{ hotel.nb_voted }}/{{ hotel.total }}
+          </span>
+          <div class="mini-progress">
+            <div class="mini-progress__fill" style="width: {{ (hotel.nb_voted / hotel.total * 100) | int }}%"></div>
+          </div>
+        </div>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty-state">
+    <p>Aucun hôtel{% if filter != 'all' %} dans ce filtre{% endif %}.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Revue Fiches Hôtels{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+  <h1 class="dashboard__title">Runs d'évaluation</h1>
+
+  {% if not current_reviewer %}
+  <div class="alert alert--blocking">
+    ⚠ Vous n'avez pas sélectionné votre nom. Utilisez le menu « Je suis : » en haut pour vous identifier — toute notation ou commentaire sera bloqué tant qu'aucun nom n'est choisi.
+  </div>
+  {% endif %}
+
+  {% if runs %}
+  <table class="runs-table">
+    <thead>
+      <tr>
+        <th>Run</th>
+        <th class="center">Hôtels</th>
+        <th>Progression des reviewers</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for run in runs %}
+      <tr class="runs-table__row" onclick="window.location='{{ '/' + run.name }}{% if current_reviewer %}?reviewer={{ current_reviewer }}{% endif %}'">
+        <td class="runs-table__name">{{ run.name }}</td>
+        <td class="center">{{ run.count }}</td>
+        <td class="runs-table__progress">
+          {% set prog = progress_by_run.get(run.name, {}) %}
+          {% if prog %}
+            {% for reviewer, data in prog.items() %}
+            <div class="reviewer-progress">
+              <span class="reviewer-progress__name">{{ reviewer }}</span>
+              <div class="progress-bar">
+                <div class="progress-bar__fill {% if data.completed == run.count %}progress-bar__fill--done{% endif %}"
+                     style="width: {{ (data.completed / run.count * 100) | int if run.count else 0 }}%"></div>
+              </div>
+              <span class="reviewer-progress__count">{{ data.completed }}/{{ run.count }}</span>
+            </div>
+            {% endfor %}
+          {% else %}
+            <span class="muted">Aucune notation</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <p>Aucun run d'évaluation trouvé dans Langfuse.</p>
+    <p class="muted">Lancez <code>uv run python scripts/run_eval.py --run-name "mon_run"</code> pour créer un run.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

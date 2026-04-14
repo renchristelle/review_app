@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}{{ detail.hotel_name }} — {{ run_name }}{% endblock %}
+
+{% block content %}
+
+<div
+  x-data='reviewPage({{ all_votes | tojson }}, {{ my_vote | tojson }}, {{ comments_by_rubrique | tojson }}, {{ current_reviewer | tojson }}, {{ run_name | tojson }}, {{ trace_id | tojson }}, {{ detail.hotel_name | tojson }})'
+  class="review-page"
+>
+
+  {# ── BANNIÈRE REVIEWER OBLIGATOIRE ─────────────────────────────────────── #}
+  {% if not current_reviewer %}
+  <div class="reviewer-required-banner">
+    ⚠ Sélectionnez votre nom (« Je suis : ») pour pouvoir noter et commenter.
+  </div>
+  {% endif %}
+
+  {# ── HEADER STICKY ──────────────────────────────────────────────────────── #}
+  <header class="review-header">
+    <div class="review-header__top">
+      <div class="review-header__nav">
+        {% if prev_id %}
+        <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="Hôtel précédent">←</a>
+        {% else %}
+        <span class="nav-btn nav-btn--disabled">←</span>
+        {% endif %}
+        <span class="review-header__position">{{ hotel_index }} / {{ hotel_total }}</span>
+        {% if next_id %}
+        <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="Hôtel suivant">→</a>
+        {% else %}
+        <span class="nav-btn nav-btn--disabled">→</span>
+        {% endif %}
+      </div>
+
+      <div class="review-header__hotel">
+        <span class="review-header__name">{{ detail.hotel_name }}</span>
+        {% if detail.ville or detail.pays %}
+        <span class="review-header__location">
+          {{ detail.ville }}{% if detail.ville and detail.pays %}, {% endif %}{{ detail.pays }}
+        </span>
+        {% endif %}
+      </div>
+
+      <div class="review-header__actions">
+        <span class="review-header__score-badge" x-text="votedCount() + '/{{ rubriques | length }}'"></span>
+        <button @click="sourcesOpen = !sourcesOpen" class="btn-toggle"
+                :class="sourcesOpen ? 'btn-toggle--active' : ''">
+          ◉ Sources
+        </button>
+      </div>
+    </div>
+
+    {# ── Pills ─────────────────────────────────────────────────────────────── #}
+    <div class="pills-nav">
+      {% for key, label in rubriques %}
+      <a href="#rub-{{ key }}" class="pill" :class="pillClass('{{ key }}')" title="{{ label }}">
+        {{ label[:8] }}{% if label|length > 8 %}…{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </header>
+
+  {# ── LAYOUT DEUX COLONNES quand sources ouvertes ───────────────────────── #}
+  <div class="content-layout" :class="sourcesOpen ? 'content-layout--split' : ''">
+
+    {# Colonne gauche : sources sticky #}
+    <aside class="sources-aside" x-show="sourcesOpen" x-transition>
+      <div class="sources-aside__inner">
+        <div class="sources-col">
+          <h3 class="sources-col__title">Booking</h3>
+          <p class="sources-col__text">
+            {% if detail.description_booking %}{{ detail.description_booking }}{% else %}<em class="muted">Non disponible</em>{% endif %}
+          </p>
+        </div>
+        {% if detail.description_expedia %}
+        <div class="sources-col">
+          <h3 class="sources-col__title">Expedia</h3>
+          <p class="sources-col__text">{{ detail.description_expedia }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    {# Colonne droite : juge + rubriques #}
+    <div class="main-col">
+
+  {# ── SCORES DU JUGE ─────────────────────────────────────────────────────── #}
+  <div class="judge-block">
+    <h2 class="judge-block__title">Évaluation du juge</h2>
+    <div class="judge-scores">
+      {% set score_labels = {"fidelite": "Fidélité", "qualite_redactionnelle": "Qualité réd.", "completude": "Complétude"} %}
+      {% for key, label in score_labels.items() %}
+      {% set s = judge_scores.get(key) %}
+      {% if s %}
+      <div class="judge-score">
+        <span class="judge-score__label">{{ label }}</span>
+        <div class="score-bar">
+          {% for i in range(1, 6) %}
+          <span class="score-bar__dot {% if i <= s.value | int %}score-bar__dot--filled{% endif %}"></span>
+          {% endfor %}
+        </div>
+        <span class="judge-score__value">{{ s.value | int }}/5</span>
+        {% if s.comment %}<p class="judge-score__comment">« {{ s.comment }} »</p>{% endif %}
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  {# ── RUBRIQUES ──────────────────────────────────────────────────────────── #}
+  {% for key, label in rubriques %}
+  <section class="rubrique" id="rub-{{ key }}">
+    <div class="rubrique__header">
+      <h2 class="rubrique__title">{{ label }}</h2>
+      <span class="rubrique__saved" x-show="saved['{{ key }}']" x-transition>✓ sauvegardé</span>
+    </div>
+
+    <div class="rubrique__content">{{ detail[key] or "—" }}</div>
+
+    {# ── Boutons de vote collaboratifs ──────────────────────────────────── #}
+    <div class="rubrique__actions">
+      {# Bouton OK #}
+      <div class="vote-group">
+        <button
+          class="vote-btn vote-btn--ok"
+          :class="myVote['{{ key }}'] === 'ok' ? 'vote-btn--selected' : ''"
+          @click="setVote('{{ key }}', 'ok')"
+          {% if not current_reviewer %}disabled title="Sélectionnez votre nom d'abord"{% endif %}
+        >
+          ✓ OK
+          <span class="vote-count" x-text="voteCount('{{ key }}', 'ok')"
+                x-show="voteCount('{{ key }}', 'ok') > 0"></span>
+        </button>
+        {# Noms des votants OK — petits, en vert, sous le bouton #}
+        <span class="vote-voters vote-voters--ok"
+              x-show="voteCount('{{ key }}', 'ok') > 0"
+              x-text="voterNames('{{ key }}', 'ok')"
+              x-cloak></span>
+        {# Tooltip (visible au hover si noms trop longs) #}
+        <div class="vote-tooltip">
+          <span x-text="voterNames('{{ key }}', 'ok')"></span>
+        </div>
+      </div>
+
+      {# Bouton KO #}
+      <div class="vote-group">
+        <button
+          class="vote-btn vote-btn--ko"
+          :class="myVote['{{ key }}'] === 'ko' ? 'vote-btn--selected' : ''"
+          @click="setVote('{{ key }}', 'ko')"
+          {% if not current_reviewer %}disabled title="Sélectionnez votre nom d'abord"{% endif %}
+        >
+          ✗ À corriger
+          <span class="vote-count" x-text="voteCount('{{ key }}', 'ko')"
+                x-show="voteCount('{{ key }}', 'ko') > 0"></span>
+        </button>
+        {# Noms des votants KO — petits, en rouge, sous le bouton #}
+        <span class="vote-voters vote-voters--ko"
+              x-show="voteCount('{{ key }}', 'ko') > 0"
+              x-text="voterNames('{{ key }}', 'ko')"
+              x-cloak></span>
+        <div class="vote-tooltip">
+          <span x-text="voterNames('{{ key }}', 'ko')"></span>
+        </div>
+      </div>
+    </div>
+
+    {# ── Flux de commentaires ───────────────────────────────────────────── #}
+    <div class="comments-section">
+      <div class="comments-list" x-show="(comments['{{ key }}'] || []).length > 0">
+        <template x-for="c in (comments['{{ key }}'] || [])" :key="c.comment_id">
+          <div class="comment">
+            <div class="comment__header">
+              <span class="comment__author" x-text="c.reviewer"></span>
+              <span class="comment__date" x-text="formatDate(c.created_at)"></span>
+            </div>
+            <div class="comment__body">
+              <p class="comment__text" x-text="c.text"></p>
+              <div class="comment__footer">
+                <div class="like-group">
+                  <button
+                    class="like-btn"
+                    :class="c.likes.includes(reviewer) ? 'like-btn--active' : ''"
+                    @click="toggleLike('{{ key }}', c)"
+                    {% if not current_reviewer %}disabled{% endif %}
+                  >
+                    ♥ <span x-text="c.likes.length"></span>
+                  </button>
+                  {# Tooltip CSS pur — pas de x-show pour éviter qu'Alpine l'affiche en permanence #}
+                  <div class="like-tooltip">
+                    <span x-text="c.likes.join(', ')"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      {% if current_reviewer %}
+      <div class="comment-form">
+        <textarea
+          class="comment-input"
+          :placeholder="'Ajouter un commentaire sur « {{ label }}  »…'"
+          x-model="newComment['{{ key }}']"
+          rows="2"
+          @keydown.ctrl.enter="sendComment('{{ key }}')"
+        ></textarea>
+        <button
+          class="btn-comment-send"
+          @click="sendComment('{{ key }}')"
+          :disabled="!(newComment['{{ key }}'] || '').trim()"
+        >Envoyer</button>
+      </div>
+      {% endif %}
+    </div>
+
+  </section>
+  {% endfor %}
+
+    </div>{# /main-col #}
+  </div>{# /content-layout #}
+
+  {# ── FOOTER ─────────────────────────────────────────────────────────────── #}
+  <footer class="review-footer">
+    {% if prev_id %}
+    <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="btn-nav">← Hôtel précédent</a>
+    {% else %}
+    <span class="btn-nav btn-nav--disabled">← Hôtel précédent</span>
+    {% endif %}
+
+    <a href="/{{ run_name }}?reviewer={{ current_reviewer }}" class="btn-secondary">Liste des hôtels</a>
+
+    {% if next_id %}
+    <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="btn-nav btn-nav--right">Hôtel suivant →</a>
+    {% else %}
+    <span class="btn-nav btn-nav--disabled btn-nav--right">Hôtel suivant →</span>
+    {% endif %}
+  </footer>
+
+</div>
+
+<script>
+function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, traceId, hotelName) {
+  return {
+    allVotes: initAllVotes,   // {rubrique: {reviewer: "ok"|"ko"}}
+    myVote: initMyVote,       // {rubrique: "ok"|"ko"}
+    comments: initComments,   // {rubrique: [{comment_id, reviewer, text, created_at, likes:[]}]}
+    newComment: {},           // {rubrique: string}
+    saved: {},
+    sourcesOpen: false,
+    reviewer,
+
+    votedCount() {
+      return Object.keys(this.myVote).length;
+    },
+
+    pillClass(key) {
+      const v = this.myVote[key];
+      if (v === 'ok') return 'pill--ok';
+      if (v === 'ko') return 'pill--ko';
+      return 'pill--empty';
+    },
+
+    voteCount(rubrique, val) {
+      const voters = this.allVotes[rubrique] || {};
+      return Object.values(voters).filter(v => v === val).length;
+    },
+
+    voterNames(rubrique, val) {
+      const voters = this.allVotes[rubrique] || {};
+      return Object.entries(voters)
+        .filter(([, v]) => v === val)
+        .map(([name]) => name)
+        .join(', ');
+    },
+
+    async setVote(rubrique, vote) {
+      if (!this.reviewer) return;
+      // Update local state
+      this.myVote[rubrique] = vote;
+      if (!this.allVotes[rubrique]) this.allVotes[rubrique] = {};
+      this.allVotes[rubrique][this.reviewer] = vote;
+
+      try {
+        await fetch('/vote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            run_name: runName, trace_id: traceId, hotel_name: hotelName,
+            reviewer: this.reviewer, rubrique, vote,
+          }),
+        });
+        this.saved[rubrique] = true;
+        setTimeout(() => { this.saved[rubrique] = false; }, 2000);
+      } catch (e) {
+        console.error('Erreur vote', e);
+      }
+    },
+
+    async sendComment(rubrique) {
+      const text = (this.newComment[rubrique] || '').trim();
+      if (!text || !this.reviewer) return;
+      try {
+        const res = await fetch('/comment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            run_name: runName, trace_id: traceId,
+            rubrique, reviewer: this.reviewer, text,
+          }),
+        });
+        const comment = await res.json();
+        if (!this.comments[rubrique]) this.comments[rubrique] = [];
+        this.comments[rubrique].push(comment);
+        this.newComment[rubrique] = '';
+      } catch (e) {
+        console.error('Erreur commentaire', e);
+      }
+    },
+
+    async toggleLike(rubrique, comment) {
+      if (!this.reviewer) return;
+      try {
+        const res = await fetch('/like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reviewer: this.reviewer, comment_id: comment.comment_id }),
+        });
+        const data = await res.json();
+        comment.likes = data.likers;
+      } catch (e) {
+        console.error('Erreur like', e);
+      }
+    },
+
+    formatDate(iso) {
+      try {
+        return new Date(iso).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+      } catch { return ''; }
+    },
+  };
+}
+</script>
+{% endblock %}

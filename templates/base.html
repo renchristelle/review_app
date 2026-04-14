@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Revue Fiches Hôtels{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+  <nav class="topnav">
+    <a href="/" class="topnav__brand">Revue Fiches Hôtels</a>
+    <form method="POST" action="/set-reviewer" class="topnav__reviewer{% if not current_reviewer %} topnav__reviewer--unset{% endif %}">
+      <input type="hidden" name="redirect_to" value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}">
+      <label for="reviewer-select">Je suis :</label>
+      <select name="reviewer" id="reviewer-select" onchange="this.form.submit()">
+        <option value="" {% if not current_reviewer %}selected{% endif %}>— choisir —</option>
+        {% for r in reviewers %}
+        <option value="{{ r }}" {% if r == current_reviewer %}selected{% endif %}>{{ r }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a href="/logout" class="topnav__logout">Déconnexion</a>
+  </nav>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
