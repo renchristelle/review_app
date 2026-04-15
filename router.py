@@ -15,10 +15,19 @@ from review_app.auth import make_session_token
 router = APIRouter()
 
 RUBRIQUES_LABELS = {
-    "meteo": "Météo / Actualités",
-    "person": "Qui est-il ?",
-    "travel": "Comment voyage-t-il ?",
-    "needs": "Comment lui faire plaisir ?",
+    "commercial": "Suivi commercial",
+    "pro": "Pro",
+    "perso": "Perso",
+    "health": "Santé",
+    "languages": "Langues",
+    "security": "Sécurité",
+    "air": "Aérien",
+    "car": "Transport / Voiture",
+    "housing": "Hébergement",
+    "rythme": "Rythme",
+    "activities": "Activités",
+    "good_to_know_travel": "Bon à savoir",
+    "needs": "Comment lui faire plaisir",
 }
 
 

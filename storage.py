@@ -10,9 +10,18 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 RUBRIQUES = [
-    "meteo",
-    "person",
-    "travel",
+    "commercial",
+    "pro",
+    "perso",
+    "health",
+    "languages",
+    "security",
+    "air",
+    "car",
+    "housing",
+    "rythme",
+    "activities",
+    "good_to_know_travel",
     "needs",
 ]
 

@@ -25,6 +25,13 @@ def _client_record(inp: dict) -> dict:
     return inp
 
 
+def _fmt_list(items: list | None) -> str:
+    """Convertit une liste de strings en texte bullet '- item\\n'."""
+    if not items:
+        return ""
+    return "\n".join(f"- {item}" for item in items)
+
+
 def _make_label(trace_id: str) -> str:
     """Construit un libellé lisible pour identifier la fiche client."""
     return f"Fiche_{trace_id}"
@@ -57,11 +64,20 @@ class TraceDetail:
     person_input: str
     travel_input: str
     needs_input: str
-    # Fiche enrichie (output)
-    meteo: str
-    person: str
-    travel: str
-    needs: str
+    # Sous-rubriques enrichies (MergeModelOutput)
+    commercial: str = ""
+    pro: str = ""
+    perso: str = ""
+    health: str = ""
+    languages: str = ""
+    security: str = ""
+    air: str = ""
+    car: str = ""
+    housing: str = ""
+    rythme: str = ""
+    activities: str = ""
+    good_to_know_travel: str = ""
+    needs: str = ""
     # Scores juge
     scores: list[JudgeScore] = field(default_factory=list)
 
@@ -122,7 +138,6 @@ class LangfuseReader:
             raise ValueError(f"Trace introuvable dans Langfuse : {trace_id}") from e
 
         inp = raw.input or {}
-        out = raw.output or {}
         cr = _client_record(inp)
 
         scores = []
@@ -135,6 +150,8 @@ class LangfuseReader:
                 )
             )
 
+        merge = self._get_merge_output(trace_id)
+
         return TraceDetail(
             trace_id=trace_id,
             label=_make_label(trace_id),
@@ -143,13 +160,86 @@ class LangfuseReader:
             person_input=cr.get("person") or "",
             travel_input=cr.get("travel") or "",
             needs_input=cr.get("needs") or "",
-            # Output : fiche enrichie
-            meteo=out.get("meteo") or "",
-            person=out.get("person") or "",
-            travel=out.get("travel") or "",
-            needs=out.get("needs") or "",
+            # Sous-rubriques depuis le MergeModelOutput
+            commercial=merge.get("commercial", ""),
+            pro=merge.get("pro", ""),
+            perso=merge.get("perso", ""),
+            health=merge.get("health", ""),
+            languages=merge.get("languages", ""),
+            security=merge.get("security", ""),
+            air=merge.get("air", ""),
+            car=merge.get("car", ""),
+            housing=merge.get("housing", ""),
+            rythme=merge.get("rythme", ""),
+            activities=merge.get("activities", ""),
+            good_to_know_travel=merge.get("good_to_know_travel", ""),
+            needs=merge.get("needs", ""),
             scores=scores,
         )
+
+    def _get_merge_output(self, trace_id: str) -> dict[str, str]:
+        """Extrait le MergeModelOutput depuis les observations Langfuse.
+
+        Stratégie : trouver le PydanticToolsParser qui n'est pas descendant
+        des spans nommés 'client-record-enrichment' ou 'demands-extraction',
+        et dont l'output contient 'commercial' mais pas 'actuality'.
+
+        Retourne un dict {sous_rubrique: texte_formaté}.
+        """
+        import json
+
+        try:
+            obs_resp = self._lf.observations.get_many(
+                trace_id=trace_id, fields="basic,io", limit=100
+            )
+            obs = obs_resp.data or []
+        except Exception:
+            return {}
+
+        # Identifier les spans des deux enrichissements parallèles
+        named_ids = {
+            o.id
+            for o in obs
+            if o.name in ("client-record-enrichment", "demands-extraction")
+        }
+
+        # Construire l'ensemble de tous leurs descendants
+        def _descendants(parent_id: str) -> set[str]:
+            result: set[str] = set()
+            for o in obs:
+                if o.parent_observation_id == parent_id:
+                    result.add(o.id)
+                    result |= _descendants(o.id)
+            return result
+
+        excluded = set(named_ids)
+        for nid in named_ids:
+            excluded |= _descendants(nid)
+
+        # Chercher le PydanticToolsParser du merge (hors descendants exclus)
+        for o in obs:
+            if o.type != "CHAIN" or o.name != "PydanticToolsParser":
+                continue
+            if o.id in excluded:
+                continue
+            raw_out = o.output
+            if raw_out is None:
+                continue
+            if isinstance(raw_out, str):
+                try:
+                    data = json.loads(raw_out)
+                except json.JSONDecodeError:
+                    continue
+            else:
+                data = raw_out
+            if not isinstance(data, dict):
+                continue
+            if "commercial" not in data or "actuality" in data:
+                continue
+            # Convertir chaque liste en texte formaté bullet
+            return {k: _fmt_list(v) for k, v in data.items()}
+
+        return {}
 
     def _fetch_all_eval_traces(self):
         """Pagine toutes les traces d'évaluation (metadata.run_name présent)."""
