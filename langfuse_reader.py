@@ -1,10 +1,9 @@
-"""Lecture des données Langfuse pour la review app.
+"""Lecture des données Langfuse pour la review app — fiches client restructuration.
 
-Les traces d'évaluation ont metadata.run_name mais pas de lien dataset run formel.
-On interroge donc les traces directement et on filtre côté client.
+Les traces ont metadata.run_name et le nom "enrich-client-record".
+On interroge les traces directement et on filtre côté client.
 
-Utilise LangfuseAPI (SDK v4) à la place de l'ancien Langfuse qui n'expose plus
-fetch_traces / fetch_trace.
+Utilise LangfuseAPI (SDK v4).
 """
 
 from __future__ import annotations
@@ -14,31 +13,36 @@ from dataclasses import dataclass, field
 from langfuse.api import LangfuseAPI
 
 
-def _extract_provider_text(inp: dict, provider_name: str) -> str:
-    """Extrait le texte concaténé d'un provider depuis le format providers[] (nouveau format)."""
-    for provider in inp.get("providers") or []:
-        if provider.get("name") == provider_name:
-            return "\n".join(
-                d["value"] for d in provider.get("descriptions", []) if d.get("value", "").strip()
-            )
-    return ""
+def _client_record(inp: dict) -> dict:
+    """Extrait les champs de la fiche client depuis l'input de la trace.
+
+    Langfuse @observe capture les arguments : l'input peut être
+    {"client_record": {...}} ou directement les champs à plat.
+    """
+    if "client_record" in inp:
+        cr = inp["client_record"]
+        return cr if isinstance(cr, dict) else {}
+    return inp
+
+
+def _make_label(trace_id: str) -> str:
+    """Construit un libellé lisible pour identifier la fiche client."""
+    return f"Fiche_{trace_id}"
 
 
 @dataclass
 class TraceSummary:
-    """Résumé d'une trace pour la liste des hôtels."""
+    """Résumé d'une trace pour la liste des fiches."""
 
     trace_id: str
     run_name: str
-    hotel_name: str
-    ville: str
-    pays: str
+    label: str  # identifiant lisible de la fiche client
 
 
 @dataclass
 class JudgeScore:
-    name: str  # "fidelite" | "qualite_redactionnelle" | "completude"
-    value: float  # 1–5
+    name: str
+    value: float
     comment: str
 
 
@@ -47,22 +51,17 @@ class TraceDetail:
     """Détail complet d'une trace pour la page de notation."""
 
     trace_id: str
-    hotel_name: str
-    ville: str
-    pays: str
-    description_booking: str
-    description_expedia: str
-    # 10 rubriques générées
-    descriptif: str
-    localisation: str
-    mode_acces: str
-    tourisme_responsable: str
-    chambre: str
-    service: str
-    restaurant: str
-    activite_gratuite: str
-    activite_avec_participation: str
-    enfants: str
+    label: str
+    # Fiche originale (input)
+    meteo_input: str
+    person_input: str
+    travel_input: str
+    needs_input: str
+    # Fiche enrichie (output)
+    meteo: str
+    person: str
+    travel: str
+    needs: str
     # Scores juge
     scores: list[JudgeScore] = field(default_factory=list)
 
@@ -103,14 +102,11 @@ class LangfuseReader:
         for t in traces:
             if (t.metadata or {}).get("run_name") != run_name:
                 continue
-            inp = t.input or {}
             result.append(
                 TraceSummary(
                     trace_id=t.id,
                     run_name=run_name,
-                    hotel_name=inp.get("name") or inp.get("nom_hotel") or t.id[:8],
-                    ville=inp.get("ville") or "",
-                    pays=inp.get("pays") or "",
+                    label=_make_label(t.id),
                 )
             )
         return result
@@ -118,14 +114,16 @@ class LangfuseReader:
     def get_trace_detail(self, trace_id: str) -> TraceDetail:
         """Retourne le détail complet d'une trace (input, output, scores).
 
-        Lève ValueError si la trace n'existe pas dans le projet Langfuse.
+        Lève ValueError si la trace n'existe pas dans Langfuse.
         """
         try:
             raw = self._lf.trace.get(trace_id)
         except Exception as e:
             raise ValueError(f"Trace introuvable dans Langfuse : {trace_id}") from e
+
         inp = raw.input or {}
         out = raw.output or {}
+        cr = _client_record(inp)
 
         scores = []
         for s in raw.scores or []:
@@ -139,25 +137,17 @@ class LangfuseReader:
 
         return TraceDetail(
             trace_id=trace_id,
-            hotel_name=inp.get("name") or inp.get("nom_hotel") or trace_id[:8],
-            ville=inp.get("ville") or "",
-            pays=inp.get("pays") or "",
-            description_booking=_extract_provider_text(inp, "BOW")
-            or inp.get("description_booking")
-            or "",
-            description_expedia=_extract_provider_text(inp, "RXE")
-            or inp.get("description_expedia")
-            or "",
-            descriptif=out.get("descriptif") or "",
-            localisation=out.get("localisation") or "",
-            mode_acces=out.get("mode_acces") or "",
-            tourisme_responsable=out.get("tourisme_responsable") or "",
-            chambre=out.get("chambre") or "",
-            service=out.get("service") or "",
-            restaurant=out.get("restaurant") or "",
-            activite_gratuite=out.get("activite_gratuite") or "",
-            activite_avec_participation=out.get("activite_avec_participation") or "",
-            enfants=out.get("enfants") or "",
+            label=_make_label(trace_id),
+            # Input : fiche originale
+            meteo_input=cr.get("meteo") or "",
+            person_input=cr.get("person") or "",
+            travel_input=cr.get("travel") or "",
+            needs_input=cr.get("needs") or "",
+            # Output : fiche enrichie
+            meteo=out.get("meteo") or "",
+            person=out.get("person") or "",
+            travel=out.get("travel") or "",
+            needs=out.get("needs") or "",
             scores=scores,
         )
 
@@ -165,15 +155,20 @@ class LangfuseReader:
         """Pagine toutes les traces d'évaluation (metadata.run_name présent)."""
         page, all_traces = 1, []
         while True:
-            resp = self._lf.trace.list(name="eval-generate", page=page, limit=50)
+            resp = self._lf.trace.list(
+                name="enrich-client-record-dev", page=page, limit=50
+            )
             batch = resp.data or []
             all_traces.extend(batch)
             if len(batch) < 50:
                 break
             page += 1
 
-        # Garder les traces avec run_name ; restreindre aux runs listés dans config si défini
         out = [t for t in all_traces if (t.metadata or {}).get("run_name")]
         if self._allowed_run_names is not None:
-            out = [t for t in out if (t.metadata or {}).get("run_name") in self._allowed_run_names]
+            out = [
+                t
+                for t in out
+                if (t.metadata or {}).get("run_name") in self._allowed_run_names
+            ]
         return out

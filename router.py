@@ -15,16 +15,10 @@ from review_app.auth import make_session_token
 router = APIRouter()
 
 RUBRIQUES_LABELS = {
-    "descriptif": "Descriptif",
-    "localisation": "Localisation",
-    "mode_acces": "Mode d'accès",
-    "tourisme_responsable": "Tourisme responsable",
-    "chambre": "Chambres",
-    "service": "Services",
-    "restaurant": "Restaurant",
-    "activite_gratuite": "Activités gratuites",
-    "activite_avec_participation": "Activités avec participation",
-    "enfants": "Pour les enfants",
+    "meteo": "Météo / Actualités",
+    "person": "Qui est-il ?",
+    "travel": "Comment voyage-t-il ?",
+    "needs": "Comment lui faire plaisir ?",
 }
 
 
@@ -144,9 +138,7 @@ async def hotel_list(
         hotels.append(
             {
                 "trace_id": t.trace_id,
-                "hotel_name": t.hotel_name,
-                "ville": t.ville,
-                "pays": t.pays,
+                "label": t.label,
                 "nb_voted": nb_voted,
                 "total": len(storage.RUBRIQUES),
                 "complete": complete,
@@ -235,8 +227,8 @@ async def review_hotel(
             "rubriques": rubriques,
             "current_reviewer": effective_reviewer,
             "reviewers": cfg.reviewers,
-            "hotel_index": idx + 1,
-            "hotel_total": len(trace_ids),
+            "fiche_index": idx + 1,
+            "fiche_total": len(trace_ids),
             "prev_id": prev_id,
             "next_id": next_id,
         },
@@ -251,7 +243,7 @@ async def review_hotel(
 class VotePayload(BaseModel):
     run_name: str
     trace_id: str
-    hotel_name: str
+    label: str
     reviewer: str
     rubrique: str
     vote: str  # "ok" | "ko"
@@ -266,7 +258,7 @@ async def save_vote(request: Request, payload: VotePayload, response: Response):
         votes_path=cfg.votes_csv_path,
         run_name=payload.run_name,
         trace_id=payload.trace_id,
-        hotel_name=payload.hotel_name,
+        hotel_name=payload.label,
         reviewer=payload.reviewer,
         rubrique=payload.rubrique,
         vote=payload.vote,

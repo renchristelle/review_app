@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ run_name }} — Revue Fiches Hôtels{% endblock %}
+{% block title %}{{ run_name }} — Revue Fiches Client{% endblock %}
 
 {% block content %}
 <div class="list-page">
@@ -44,10 +44,7 @@
           {% endif %}
         </div>
         <div class="hotel-card__info">
-          <span class="hotel-card__name">{{ hotel.hotel_name }}</span>
-          {% if hotel.ville or hotel.pays %}
-          <span class="hotel-card__location">{{ hotel.ville }}{% if hotel.ville and hotel.pays %}, {% endif %}{{ hotel.pays }}</span>
-          {% endif %}
+          <span class="hotel-card__name">{{ hotel.label }}</span>
         </div>
         <div class="hotel-card__progress">
           <span class="hotel-card__count {% if hotel.complete %}hotel-card__count--done{% endif %}">
@@ -63,7 +60,7 @@
   </ul>
   {% else %}
   <div class="empty-state">
-    <p>Aucun hôtel{% if filter != 'all' %} dans ce filtre{% endif %}.</p>
+    <p>Aucune fiche{% if filter != 'all' %} dans ce filtre{% endif %}.</p>
   </div>
   {% endif %}
 </div>

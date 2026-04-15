@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ detail.hotel_name }} — {{ run_name }}{% endblock %}
+{% block title %}{{ detail.label }} — {{ run_name }}{% endblock %}
 
 {% block content %}
 
 <div
-  x-data='reviewPage({{ all_votes | tojson }}, {{ my_vote | tojson }}, {{ comments_by_rubrique | tojson }}, {{ current_reviewer | tojson }}, {{ run_name | tojson }}, {{ trace_id | tojson }}, {{ detail.hotel_name | tojson }})'
+  x-data='reviewPage({{ all_votes | tojson }}, {{ my_vote | tojson }}, {{ comments_by_rubrique | tojson }}, {{ current_reviewer | tojson }}, {{ run_name | tojson }}, {{ trace_id | tojson }}, {{ detail.label | tojson }})'
   class="review-page"
 >
 
@@ -25,7 +25,7 @@
         {% else %}
         <span class="nav-btn nav-btn--disabled">←</span>
         {% endif %}
-        <span class="review-header__position">{{ hotel_index }} / {{ hotel_total }}</span>
+        <span class="review-header__position">{{ fiche_index }} / {{ fiche_total }}</span>
         {% if next_id %}
         <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="Hôtel suivant">→</a>
         {% else %}
@@ -34,19 +34,14 @@
       </div>
 
       <div class="review-header__hotel">
-        <span class="review-header__name">{{ detail.hotel_name }}</span>
-        {% if detail.ville or detail.pays %}
-        <span class="review-header__location">
-          {{ detail.ville }}{% if detail.ville and detail.pays %}, {% endif %}{{ detail.pays }}
-        </span>
-        {% endif %}
+        <span class="review-header__name">{{ detail.label }}</span>
       </div>
 
       <div class="review-header__actions">
         <span class="review-header__score-badge" x-text="votedCount() + '/{{ rubriques | length }}'"></span>
         <button @click="sourcesOpen = !sourcesOpen" class="btn-toggle"
                 :class="sourcesOpen ? 'btn-toggle--active' : ''">
-          ◉ Sources
+          ◉ Fiche originale
         </button>
       </div>
     </div>
@@ -67,18 +62,14 @@
     {# Colonne gauche : sources sticky #}
     <aside class="sources-aside" x-show="sourcesOpen" x-transition>
       <div class="sources-aside__inner">
+        {% for key, label in [("meteo_input", "Météo / Actualités"), ("person_input", "Qui est-il ?"), ("travel_input", "Comment voyage-t-il ?"), ("needs_input", "Comment lui faire plaisir ?")] %}
         <div class="sources-col">
-          <h3 class="sources-col__title">Booking</h3>
-          <p class="sources-col__text">
-            {% if detail.description_booking %}{{ detail.description_booking }}{% else %}<em class="muted">Non disponible</em>{% endif %}
+          <h3 class="sources-col__title">{{ label }}</h3>
+          <p class="sources-col__text" style="white-space: pre-wrap;">
+            {% if detail[key] %}{{ detail[key] }}{% else %}<em class="muted">Non renseigné</em>{% endif %}
           </p>
         </div>
-        {% if detail.description_expedia %}
-        <div class="sources-col">
-          <h3 class="sources-col__title">Expedia</h3>
-          <p class="sources-col__text">{{ detail.description_expedia }}</p>
-        </div>
-        {% endif %}
+        {% endfor %}
       </div>
     </aside>
 
@@ -116,7 +107,7 @@
       <span class="rubrique__saved" x-show="saved['{{ key }}']" x-transition>✓ sauvegardé</span>
     </div>
 
-    <div class="rubrique__content">{{ detail[key] or "—" }}</div>
+    <div class="rubrique__content" style="white-space: pre-wrap;">{{ detail[key] or "—" }}</div>
 
     {# ── Boutons de vote collaboratifs ──────────────────────────────────── #}
     <div class="rubrique__actions">
@@ -225,24 +216,24 @@
   {# ── FOOTER ─────────────────────────────────────────────────────────────── #}
   <footer class="review-footer">
     {% if prev_id %}
-    <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="btn-nav">← Hôtel précédent</a>
+    <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="btn-nav">← Fiche précédente</a>
     {% else %}
-    <span class="btn-nav btn-nav--disabled">← Hôtel précédent</span>
+    <span class="btn-nav btn-nav--disabled">← Fiche précédente</span>
     {% endif %}
 
-    <a href="/{{ run_name }}?reviewer={{ current_reviewer }}" class="btn-secondary">Liste des hôtels</a>
+    <a href="/{{ run_name }}?reviewer={{ current_reviewer }}" class="btn-secondary">Liste des fiches</a>
 
     {% if next_id %}
-    <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="btn-nav btn-nav--right">Hôtel suivant →</a>
+    <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="btn-nav btn-nav--right">Fiche suivante →</a>
     {% else %}
-    <span class="btn-nav btn-nav--disabled btn-nav--right">Hôtel suivant →</span>
+    <span class="btn-nav btn-nav--disabled btn-nav--right">Fiche suivante →</span>
     {% endif %}
   </footer>
 
 </div>
 
 <script>
-function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, traceId, hotelName) {
+function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, traceId, label) {
   return {
     allVotes: initAllVotes,   // {rubrique: {reviewer: "ok"|"ko"}}
     myVote: initMyVote,       // {rubrique: "ok"|"ko"}
@@ -288,7 +279,7 @@ function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, t
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            run_name: runName, trace_id: traceId, hotel_name: hotelName,
+            run_name: runName, trace_id: traceId, label,
             reviewer: this.reviewer, rubrique, vote,
           }),
         });

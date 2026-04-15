@@ -10,16 +10,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 RUBRIQUES = [
-    "descriptif",
-    "localisation",
-    "mode_acces",
-    "tourisme_responsable",
-    "chambre",
-    "service",
-    "restaurant",
-    "activite_gratuite",
-    "activite_avec_participation",
-    "enfants",
+    "meteo",
+    "person",
+    "travel",
+    "needs",
 ]
 
 _VOTES_FIELDS = ["run_name", "trace_id", "hotel_name", "reviewer", "rubrique", "vote", "saved_at"]

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard — Revue Fiches Hôtels{% endblock %}
+{% block title %}Dashboard — Revue Fiches Client{% endblock %}
 
 {% block content %}
 <div class="dashboard">
-  <h1 class="dashboard__title">Runs d'évaluation</h1>
+  <h1 class="dashboard__title">Runs d'évaluation — Fiches Client</h1>
 
   {% if not current_reviewer %}
   <div class="alert alert--blocking">
@@ -17,7 +17,7 @@
     <thead>
       <tr>
         <th>Run</th>
-        <th class="center">Hôtels</th>
+        <th class="center">Fiches</th>
         <th>Progression des reviewers</th>
       </tr>
     </thead>
@@ -50,7 +50,7 @@
   {% else %}
   <div class="empty-state">
     <p>Aucun run d'évaluation trouvé dans Langfuse.</p>
-    <p class="muted">Lancez <code>uv run python scripts/run_eval.py --run-name "mon_run"</code> pour créer un run.</p>
+    <p class="muted">Lancez le projet restructuration avec <code>metadata.run_name</code> pour créer un run.</p>
   </div>
   {% endif %}
 </div>
