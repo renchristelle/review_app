@@ -18,22 +18,10 @@ if _env_file.exists():
             os.environ.setdefault(key.strip(), value.strip())
 
 
-def _parse_test_run_names(raw_value) -> frozenset[str] | None:
-    """Lit test_run_name depuis le YAML (str ou liste). Vide / absent → pas de filtre."""
-    if raw_value is None:
-        return None
-    if isinstance(raw_value, str):
-        parts = [raw_value.strip()] if raw_value.strip() else []
-    elif isinstance(raw_value, list):
-        parts = [str(x).strip() for x in raw_value if str(x).strip()]
-    else:
-        parts = []
-    return frozenset(parts) if parts else None
-
-
 @dataclass
 class AppConfig:
     reviewers: list[str]
+    reviewer_sessions: dict[str, frozenset[str]]
     test_run_names: frozenset[str] | None
     langfuse_public_key: str
     langfuse_secret_key: str
@@ -50,16 +38,38 @@ class AppConfig:
         """Alias pour compatibilité avec le code existant."""
         return self.votes_csv_path
 
+    def allowed_sessions_for(self, reviewer: str) -> frozenset[str]:
+        """Retourne les sessions autorisées pour un reviewer. Vide = pas de restriction."""
+        return self.reviewer_sessions.get(reviewer, frozenset())
+
 
 def load_config() -> AppConfig:
     cfg_path = Path(__file__).parent / "config.yaml"
     with cfg_path.open(encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
+    reviewer_names: list[str] = []
+    reviewer_sessions: dict[str, frozenset[str]] = {}
+
+    for item in raw.get("reviewers", []):
+        if isinstance(item, dict):
+            name = str(item["name"]).strip()
+            sessions = frozenset(str(s).strip() for s in (item.get("sessions") or []) if str(s).strip())
+        else:
+            name = str(item).strip()
+            sessions = frozenset()
+        reviewer_names.append(name)
+        reviewer_sessions[name] = sessions
+
+    # Union de toutes les sessions pour le filtre global Langfuse
+    all_sessions = frozenset().union(*reviewer_sessions.values()) if reviewer_sessions else frozenset()
+    test_run_names = all_sessions if all_sessions else None
+
     reviews_dir = ROOT / "data" / "reviews"
     return AppConfig(
-        reviewers=raw.get("reviewers", []),
-        test_run_names=_parse_test_run_names(raw.get("test_run_name")),
+        reviewers=reviewer_names,
+        reviewer_sessions=reviewer_sessions,
+        test_run_names=test_run_names,
         langfuse_public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
         langfuse_secret_key=os.environ["LANGFUSE_SECRET_KEY"],
         langfuse_host=os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com"),

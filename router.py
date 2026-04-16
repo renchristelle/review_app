@@ -94,6 +94,10 @@ async def dashboard(request: Request, reviewer: str | None = Cookie(default=None
     runs = _reader(request).list_runs()
     cfg = _cfg(request)
 
+    allowed = cfg.allowed_sessions_for(reviewer or "")
+    if allowed:
+        runs = [r for r in runs if r["name"] in allowed]
+
     progress_by_run = {}
     for run in runs:
         run_name = run["name"]

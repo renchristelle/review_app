@@ -1,9 +1,48 @@
 reviewers:
-  - Eric Picot
-  - Christelle Ren
-  - Pito Nadal
-  - Virginie Romiguiere
-  - Caroline Guebel
+  - name: Christelle Ren
+    sessions:
+  - name: Pito Nadal
+    sessions:
+  - name: Natalia Isachenko
+    sessions:
+  - name: Julien Bernard
+    sessions:
 
-test_run_name:
-  - fr-FR_internal
+  - name: Elsa Belhomme
+    sessions:
+      - fr-FR_internal
+
+  - name: Cataldino Lacorte-Gloor
+    sessions:
+      - de-CH_internal
+  - name: Jasmine Armuzzi
+    sessions:
+      - de-CH_internal
+  - name: Nadine Baertschi
+    sessions:
+      - de-CH_internal
+  - name: Samira Steriti
+    sessions:
+      - de-CH_internal
+  - name: Silvia Casanova
+    sessions:
+      - de-CH_internal
+  - name:  Nahema Graf
+    sessions:
+      - de-CH_internal
+  - name:  Nadege Augier
+    sessions:
+      - de-CH_internal
+      
+  - name: Jacqui Brooks
+    sessions:
+      - en-GB_internal
+  - name: Alesha Walton
+    sessions:
+      - en-GB_internal
+  - name: Emily Rister
+    sessions:
+      - en-GB_internal
+  - name: Lucy Bailey
+    sessions:
+      - en-GB_internal

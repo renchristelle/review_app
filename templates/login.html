@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion — Revue Fiches Hôtels</title>
+  <title>Connexion — Revue Fiches Client</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
   <div class="login-wrapper">
     <div class="login-card">
-      <h1 class="login-title">Revue Fiches Hôtels</h1>
+      <h1 class="login-title">Revue Fiches Client</h1>
 
       {% if error %}
       <p class="login-error">{{ error }}</p>
@@ -20,14 +22,12 @@
 
         <div class="login-field">
           <label for="username">Identifiant</label>
-          <input type="text" id="username" name="username" autocomplete="username"
-                 autofocus required>
+          <input type="text" id="username" name="username" autocomplete="username" autofocus required>
         </div>
 
         <div class="login-field">
           <label for="password">Mot de passe</label>
-          <input type="password" id="password" name="password" autocomplete="current-password"
-                 required>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
         </div>
 
         <button type="submit" class="login-btn">Se connecter</button>
@@ -35,4 +35,5 @@
     </div>
   </div>
 </body>
+
 </html>
