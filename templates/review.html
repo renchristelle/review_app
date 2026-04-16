@@ -70,6 +70,18 @@
           </p>
         </div>
         {% endfor %}
+        {% if detail.demands_input %}
+        <div class="sources-col">
+          <h3 class="sources-col__title">Demandes</h3>
+          {% for demand in detail.demands_input %}
+          <div class="sources-col__demand">
+            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>Projet :</strong> {% if demand.project %}{{ demand.project }}{% else %}<em class="muted">Non renseigné</em>{% endif %}</p>
+            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>Qualification :</strong> {% if demand.qualification %}{{ demand.qualification }}{% else %}<em class="muted">Non renseigné</em>{% endif %}</p>
+          </div>
+          {% if not loop.last %}<hr class="sources-col__divider">{% endif %}
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
     </aside>
 

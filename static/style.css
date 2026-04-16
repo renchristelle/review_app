@@ -87,7 +87,7 @@ code { font-family: monospace; background: #edf2f7; padding: 1px 5px; border-rad
 }
 .login-btn:hover { background: #2563eb; }
 
-.main-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+.main-content { width: 100%; margin: 0 auto; padding: 2rem 1.5rem; }
 
 /* ── Reviewer unset — nav highlight ──────────────────────────────────────── */
 .topnav__reviewer--unset label {

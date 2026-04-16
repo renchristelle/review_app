@@ -341,6 +341,35 @@ async def toggle_like(request: Request, payload: LikePayload):
 
 
 # ---------------------------------------------------------------------------
+# Debug : inspecter le raw input d'une trace (à supprimer après diagnostic)
+# ---------------------------------------------------------------------------
+
+
+@router.get("/debug/trace/{trace_id}")
+async def debug_trace_input(request: Request, trace_id: str):
+    """Retourne le raw.input Langfuse pour diagnostiquer les champs vides."""
+    lf = _reader(request)._lf
+    try:
+        raw = lf.trace.get(trace_id)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    from review_app.langfuse_reader import _client_record
+    inp = raw.input or {}
+    cr = _client_record(inp)
+    return JSONResponse({
+        "raw_input": inp,
+        "client_record": cr,
+        "extracted": {
+            "meteo": cr.get("meteo"),
+            "person": cr.get("person"),
+            "travel": cr.get("travel"),
+            "needs": cr.get("needs"),
+            "demands": cr.get("demands"),
+        },
+    })
+
+
+# ---------------------------------------------------------------------------
 # Cookie reviewer
 # ---------------------------------------------------------------------------
 

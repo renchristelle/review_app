@@ -16,9 +16,17 @@ from langfuse.api import LangfuseAPI
 def _client_record(inp: dict) -> dict:
     """Extrait les champs de la fiche client depuis l'input de la trace.
 
-    Langfuse @observe capture les arguments : l'input peut être
-    {"client_record": {...}} ou directement les champs à plat.
+    Langfuse @observe capture les arguments sous plusieurs formes possibles :
+    - {"args": [{...champs...}], "kwargs": {}}  ← cas le plus courant
+    - {"client_record": {...}}
+    - directement les champs à plat
     """
+    # Cas {"args": [{...}], "kwargs": {}}
+    if "args" in inp and isinstance(inp["args"], list) and inp["args"]:
+        first = inp["args"][0]
+        if isinstance(first, dict):
+            return first
+    # Cas {"client_record": {...}}
     if "client_record" in inp:
         cr = inp["client_record"]
         return cr if isinstance(cr, dict) else {}
@@ -64,6 +72,7 @@ class TraceDetail:
     person_input: str
     travel_input: str
     needs_input: str
+    demands_input: list = field(default_factory=list)
     # Sous-rubriques enrichies (MergeModelOutput)
     commercial: str = ""
     pro: str = ""
@@ -160,6 +169,7 @@ class LangfuseReader:
             person_input=cr.get("person") or "",
             travel_input=cr.get("travel") or "",
             needs_input=cr.get("needs") or "",
+            demands_input=cr.get("demands") or [],
             # Sous-rubriques depuis le MergeModelOutput
             commercial=merge.get("commercial", ""),
             pro=merge.get("pro", ""),
