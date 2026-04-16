@@ -2,8 +2,11 @@
 __pycache__/
 *.pyc
 
-# Environment variables (NEVER commit this)
+# Environment variables
 .env
 
-# Lock file (optional, see below)
+# Lock file
 uv.lock
+
+# Configuration files 
+config.yaml
