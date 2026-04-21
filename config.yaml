@@ -10,39 +10,45 @@ reviewers:
 
   - name: Elsa Belhomme
     sessions:
-      - fr-FR_internal
+      - fr-FR_evaluation_1
+  - name: Cécile Seyier
+    sessions:
+      - fr-FR_evaluation_1
+  - name: Christine Graffard
+    sessions:
+      - fr-FR_evaluation_1
 
   - name: Cataldino Lacorte-Gloor
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name: Jasmine Armuzzi
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name: Nadine Baertschi
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name: Samira Steriti
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name: Silvia Casanova
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name:  Nahema Graf
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
   - name:  Nadege Augier
     sessions:
-      - de-CH_internal
+      - de-CH_evaluation_1
       
   - name: Jacqui Brooks
     sessions:
-      - en-GB_internal
+      - en-GB_evaluation_1
   - name: Alesha Walton
     sessions:
-      - en-GB_internal
+      - en-GB_evaluation_1
   - name: Emily Rister
     sessions:
-      - en-GB_internal
+      - en-GB_evaluation_1
   - name: Lucy Bailey
     sessions:
-      - en-GB_internal
+      - en-GB_evaluation_1

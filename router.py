@@ -18,9 +18,9 @@ RUBRIQUES_LABELS = {
     "commercial": "Suivi commercial",
     "pro": "Pro",
     "perso": "Perso",
-    "health": "Santé",
+    "health": "Santé / Régime alimentaire",
     "languages": "Langues",
-    "security": "Sécurité",
+    "security": "Sécurité / Assurance / Formalités",
     "air": "Aérien",
     "car": "Transport / Voiture",
     "housing": "Hébergement",
@@ -66,7 +66,9 @@ async def login(request: Request):
     if username == cfg.app_username and password == cfg.app_password:
         token = make_session_token(cfg.app_secret, username)
         response = RedirectResponse(url=next_url, status_code=303)
-        response.set_cookie("session", token, httponly=True, max_age=7 * 24 * 3600, samesite="lax")
+        response.set_cookie(
+            "session", token, httponly=True, max_age=7 * 24 * 3600, samesite="lax"
+        )
         return response
 
     return _templates(request).TemplateResponse(
@@ -138,7 +140,9 @@ async def hotel_list(
 
     votes = storage.get_votes(cfg.votes_csv_path, run_name, effective_reviewer)
 
-    all_complete = [len(votes.get(t.trace_id, {})) >= len(storage.RUBRIQUES) for t in traces]
+    all_complete = [
+        len(votes.get(t.trace_id, {})) >= len(storage.RUBRIQUES) for t in traces
+    ]
     counts = {
         "all": len(traces),
         "todo": sum(1 for c in all_complete if not c),
@@ -213,7 +217,8 @@ async def review_hotel(
     )
     # Sérialiser en dict pour Jinja2 / tojson
     comments_json = {
-        rub: [asdict(c) for c in comments] for rub, comments in comments_by_rubrique.items()
+        rub: [asdict(c) for c in comments]
+        for rub, comments in comments_by_rubrique.items()
     }
 
     # Navigation précédent / suivant
@@ -266,7 +271,9 @@ class VotePayload(BaseModel):
 async def save_vote(request: Request, payload: VotePayload, response: Response):
     cfg = _cfg(request)
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
-        raise HTTPException(status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom.")
+        raise HTTPException(
+            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
+        )
     storage.save_vote(
         votes_path=cfg.votes_csv_path,
         run_name=payload.run_name,
@@ -295,10 +302,14 @@ class CommentPayload(BaseModel):
 @router.post("/comment", status_code=201)
 async def post_comment(request: Request, payload: CommentPayload):
     if not payload.text.strip():
-        raise HTTPException(status_code=422, detail="Le commentaire ne peut pas être vide.")
+        raise HTTPException(
+            status_code=422, detail="Le commentaire ne peut pas être vide."
+        )
     cfg = _cfg(request)
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
-        raise HTTPException(status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom.")
+        raise HTTPException(
+            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
+        )
     comment_id = storage.add_comment(
         comments_path=cfg.comments_csv_path,
         run_name=payload.run_name,
@@ -335,7 +346,9 @@ class LikePayload(BaseModel):
 async def toggle_like(request: Request, payload: LikePayload):
     cfg = _cfg(request)
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
-        raise HTTPException(status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom.")
+        raise HTTPException(
+            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
+        )
     liked, likers = storage.toggle_like(
         likes_path=cfg.likes_csv_path,
         reviewer=payload.reviewer,
@@ -358,19 +371,22 @@ async def debug_trace_input(request: Request, trace_id: str):
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=404)
     from review_app.langfuse_reader import _client_record
+
     inp = raw.input or {}
     cr = _client_record(inp)
-    return JSONResponse({
-        "raw_input": inp,
-        "client_record": cr,
-        "extracted": {
-            "meteo": cr.get("meteo"),
-            "person": cr.get("person"),
-            "travel": cr.get("travel"),
-            "needs": cr.get("needs"),
-            "demands": cr.get("demands"),
-        },
-    })
+    return JSONResponse(
+        {
+            "raw_input": inp,
+            "client_record": cr,
+            "extracted": {
+                "meteo": cr.get("meteo"),
+                "person": cr.get("person"),
+                "travel": cr.get("travel"),
+                "needs": cr.get("needs"),
+                "demands": cr.get("demands"),
+            },
+        }
+    )
 
 
 # ---------------------------------------------------------------------------
