@@ -12,7 +12,7 @@
   {# ── BANNIÈRE REVIEWER OBLIGATOIRE ─────────────────────────────────────── #}
   {% if not current_reviewer %}
   <div class="reviewer-required-banner">
-    ⚠ Sélectionnez votre nom (« Je suis : ») pour pouvoir noter et commenter.
+    {{ t.review_alert_no_reviewer }}
   </div>
   {% endif %}
 
@@ -21,13 +21,13 @@
     <div class="review-header__top">
       <div class="review-header__nav">
         {% if prev_id %}
-        <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="Hôtel précédent">←</a>
+        <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="{{ t.review_prev_title }}">←</a>
         {% else %}
         <span class="nav-btn nav-btn--disabled">←</span>
         {% endif %}
         <span class="review-header__position">{{ fiche_index }} / {{ fiche_total }}</span>
         {% if next_id %}
-        <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="Hôtel suivant">→</a>
+        <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="nav-btn" title="{{ t.review_next_title }}">→</a>
         {% else %}
         <span class="nav-btn nav-btn--disabled">→</span>
         {% endif %}
@@ -41,7 +41,7 @@
         <span class="review-header__score-badge" x-text="votedCount() + '/{{ rubriques | length }}'"></span>
         <button @click="sourcesOpen = !sourcesOpen" class="btn-toggle"
                 :class="sourcesOpen ? 'btn-toggle--active' : ''">
-          ◉ Fiche originale
+          {{ t.review_sources_btn }}
         </button>
       </div>
     </div>
@@ -62,21 +62,21 @@
     {# Colonne gauche : sources sticky #}
     <aside class="sources-aside" x-show="sourcesOpen" x-transition>
       <div class="sources-aside__inner">
-        {% for key, label in [("meteo_input", "Météo / Actualités"), ("person_input", "Qui est-il ?"), ("travel_input", "Comment voyage-t-il ?"), ("needs_input", "Comment lui faire plaisir ?")] %}
+        {% for key, label in [("meteo_input", t.review_source_meteo), ("person_input", t.review_source_person), ("travel_input", t.review_source_travel), ("needs_input", t.review_source_needs)] %}
         <div class="sources-col">
           <h3 class="sources-col__title">{{ label }}</h3>
           <p class="sources-col__text" style="white-space: pre-wrap;">
-            {% if detail[key] %}{{ detail[key] }}{% else %}<em class="muted">Non renseigné</em>{% endif %}
+            {% if detail[key] %}{{ detail[key] }}{% else %}<em class="muted">{{ t.review_not_filled }}</em>{% endif %}
           </p>
         </div>
         {% endfor %}
         {% if detail.demands_input %}
         <div class="sources-col">
-          <h3 class="sources-col__title">Demandes</h3>
+          <h3 class="sources-col__title">{{ t.review_demands }}</h3>
           {% for demand in detail.demands_input %}
           <div class="sources-col__demand">
-            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>Projet :</strong> {% if demand.project %}{{ demand.project }}{% else %}<em class="muted">Non renseigné</em>{% endif %}</p>
-            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>Qualification :</strong> {% if demand.qualification %}{{ demand.qualification }}{% else %}<em class="muted">Non renseigné</em>{% endif %}</p>
+            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>{{ t.review_demand_project }}</strong> {% if demand.project %}{{ demand.project }}{% else %}<em class="muted">{{ t.review_not_filled }}</em>{% endif %}</p>
+            <p class="sources-col__text" style="white-space: pre-wrap;"><strong>{{ t.review_demand_qualification }}</strong> {% if demand.qualification %}{{ demand.qualification }}{% else %}<em class="muted">{{ t.review_not_filled }}</em>{% endif %}</p>
           </div>
           {% if not loop.last %}<hr class="sources-col__divider">{% endif %}
           {% endfor %}
@@ -90,9 +90,9 @@
 
   {# ── SCORES DU JUGE ─────────────────────────────────────────────────────── #}
   <div class="judge-block">
-    <h2 class="judge-block__title">Évaluation du juge</h2>
+    <h2 class="judge-block__title">{{ t.review_judge_title }}</h2>
     <div class="judge-scores">
-      {% set score_labels = {"fidelite": "Fidélité", "qualite_redactionnelle": "Qualité réd.", "completude": "Complétude"} %}
+      {% set score_labels = {"fidelite": t.review_score_fidelite, "qualite_redactionnelle": t.review_score_qualite, "completude": t.review_score_completude} %}
       {% for key, label in score_labels.items() %}
       {% set s = judge_scores.get(key) %}
       {% if s %}
@@ -116,7 +116,7 @@
   <section class="rubrique" id="rub-{{ key }}">
     <div class="rubrique__header">
       <h2 class="rubrique__title">{{ label }}</h2>
-      <span class="rubrique__saved" x-show="saved['{{ key }}']" x-transition>✓ sauvegardé</span>
+      <span class="rubrique__saved" x-show="saved['{{ key }}']" x-transition>{{ t.review_saved }}</span>
     </div>
 
     <div class="rubrique__content" style="white-space: pre-wrap;">{{ detail[key] or "—" }}</div>
@@ -129,9 +129,9 @@
           class="vote-btn vote-btn--ok"
           :class="myVote['{{ key }}'] === 'ok' ? 'vote-btn--selected' : ''"
           @click="setVote('{{ key }}', 'ok')"
-          {% if not current_reviewer %}disabled title="Sélectionnez votre nom d'abord"{% endif %}
+          {% if not current_reviewer %}disabled title="{{ t.review_select_name_first }}"{% endif %}
         >
-          ✓ OK
+          {{ t.review_vote_ok }}
           <span class="vote-count" x-text="voteCount('{{ key }}', 'ok')"
                 x-show="voteCount('{{ key }}', 'ok') > 0"></span>
         </button>
@@ -152,9 +152,9 @@
           class="vote-btn vote-btn--ko"
           :class="myVote['{{ key }}'] === 'ko' ? 'vote-btn--selected' : ''"
           @click="setVote('{{ key }}', 'ko')"
-          {% if not current_reviewer %}disabled title="Sélectionnez votre nom d'abord"{% endif %}
+          {% if not current_reviewer %}disabled title="{{ t.review_select_name_first }}"{% endif %}
         >
-          ✗ À corriger
+          {{ t.review_vote_ko }}
           <span class="vote-count" x-text="voteCount('{{ key }}', 'ko')"
                 x-show="voteCount('{{ key }}', 'ko') > 0"></span>
         </button>
@@ -205,7 +205,7 @@
       <div class="comment-form">
         <textarea
           class="comment-input"
-          :placeholder="'Ajouter un commentaire sur « {{ label }}  »…'"
+          :placeholder="'{{ t.review_comment_placeholder_prefix }} {{ label }} »…'"
           x-model="newComment['{{ key }}']"
           rows="2"
           @keydown.ctrl.enter="sendComment('{{ key }}')"
@@ -214,7 +214,7 @@
           class="btn-comment-send"
           @click="sendComment('{{ key }}')"
           :disabled="!(newComment['{{ key }}'] || '').trim()"
-        >Envoyer</button>
+        >{{ t.review_comment_send }}</button>
       </div>
       {% endif %}
     </div>
@@ -228,17 +228,17 @@
   {# ── FOOTER ─────────────────────────────────────────────────────────────── #}
   <footer class="review-footer">
     {% if prev_id %}
-    <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="btn-nav">← Fiche précédente</a>
+    <a href="/{{ run_name }}/{{ prev_id }}?reviewer={{ current_reviewer }}" class="btn-nav">{{ t.review_footer_prev }}</a>
     {% else %}
-    <span class="btn-nav btn-nav--disabled">← Fiche précédente</span>
+    <span class="btn-nav btn-nav--disabled">{{ t.review_footer_prev }}</span>
     {% endif %}
 
-    <a href="/{{ run_name }}?reviewer={{ current_reviewer }}" class="btn-secondary">Liste des fiches</a>
+    <a href="/{{ run_name }}?reviewer={{ current_reviewer }}" class="btn-secondary">{{ t.review_footer_list }}</a>
 
     {% if next_id %}
-    <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="btn-nav btn-nav--right">Fiche suivante →</a>
+    <a href="/{{ run_name }}/{{ next_id }}?reviewer={{ current_reviewer }}" class="btn-nav btn-nav--right">{{ t.review_footer_next }}</a>
     {% else %}
-    <span class="btn-nav btn-nav--disabled btn-nav--right">Fiche suivante →</span>
+    <span class="btn-nav btn-nav--disabled btn-nav--right">{{ t.review_footer_next }}</span>
     {% endif %}
   </footer>
 
@@ -340,7 +340,7 @@ function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, t
 
     formatDate(iso) {
       try {
-        return new Date(iso).toLocaleString('fr-FR', {
+        return new Date(iso).toLocaleString('{{ t.js_date_locale }}', {
           day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
         });
       } catch { return ''; }

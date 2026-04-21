@@ -1,14 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard — Revue Fiches Client{% endblock %}
+{% block title %}Dashboard — {{ t.app_title }}{% endblock %}
 
 {% block content %}
 <div class="dashboard">
-  <h1 class="dashboard__title">Runs d'évaluation — Fiches Client</h1>
+  <h1 class="dashboard__title">{{ t.dashboard_title }}</h1>
 
   {% if not current_reviewer %}
   <div class="alert alert--blocking">
-    ⚠ Vous n'avez pas sélectionné votre nom. Utilisez le menu « Je suis : » en haut pour vous identifier — toute notation ou commentaire sera bloqué tant qu'aucun nom n'est choisi.
+    {{ t.dashboard_alert_no_reviewer }}
   </div>
   {% endif %}
 
@@ -16,9 +16,9 @@
   <table class="runs-table">
     <thead>
       <tr>
-        <th>Run</th>
-        <th class="center">Fiches</th>
-        <th>Progression des reviewers</th>
+        <th>{{ t.dashboard_col_run }}</th>
+        <th class="center">{{ t.dashboard_col_files }}</th>
+        <th>{{ t.dashboard_col_progress }}</th>
       </tr>
     </thead>
     <tbody>
@@ -40,7 +40,7 @@
             </div>
             {% endfor %}
           {% else %}
-            <span class="muted">Aucune notation</span>
+            <span class="muted">{{ t.dashboard_no_votes }}</span>
           {% endif %}
         </td>
       </tr>
@@ -49,8 +49,8 @@
   </table>
   {% else %}
   <div class="empty-state">
-    <p>Aucun run d'évaluation trouvé dans Langfuse.</p>
-    <p class="muted">Lancez le projet restructuration avec <code>metadata.run_name</code> pour créer un run.</p>
+    <p>{{ t.dashboard_no_runs }}</p>
+    <p class="muted">{{ t.dashboard_no_runs_hint | safe }}</p>
   </div>
   {% endif %}
 </div>

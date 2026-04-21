@@ -11,24 +11,14 @@ from pydantic import BaseModel
 
 from review_app import storage
 from review_app.auth import make_session_token
+from review_app.translations import get_translations
 
 router = APIRouter()
 
-RUBRIQUES_LABELS = {
-    "commercial": "Suivi commercial",
-    "pro": "Pro",
-    "perso": "Perso",
-    "health": "Santé / Régime alimentaire",
-    "languages": "Langues",
-    "security": "Sécurité / Assurance / Formalités",
-    "air": "Aérien",
-    "car": "Transport / Voiture",
-    "housing": "Hébergement",
-    "rythme": "Rythme",
-    "activities": "Activités",
-    "good_to_know_travel": "Bon à savoir",
-    "needs": "Comment lui faire plaisir",
-}
+
+def _t(cfg, reviewer: str) -> dict:
+    sessions = cfg.allowed_sessions_for(reviewer)
+    return get_translations(sessions)
 
 
 def _templates(request: Request):
@@ -50,8 +40,9 @@ def _reader(request: Request):
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request, next: str = "/"):
+    t = get_translations(frozenset())
     return _templates(request).TemplateResponse(
-        request, "login.html", {"next": next, "error": None}
+        request, "login.html", {"next": next, "error": None, "t": t}
     )
 
 
@@ -71,10 +62,11 @@ async def login(request: Request):
         )
         return response
 
+    t = get_translations(frozenset())
     return _templates(request).TemplateResponse(
         request,
         "login.html",
-        {"next": next_url, "error": "Identifiant ou mot de passe incorrect."},
+        {"next": next_url, "error": t["login_error_invalid"], "t": t},
         status_code=401,
     )
 
@@ -109,6 +101,7 @@ async def dashboard(request: Request, reviewer: str | None = Cookie(default=None
             cfg.votes_csv_path, run_name, trace_ids
         )
 
+    t = _t(cfg, reviewer or "")
     return _templates(request).TemplateResponse(
         request,
         "dashboard.html",
@@ -117,6 +110,7 @@ async def dashboard(request: Request, reviewer: str | None = Cookie(default=None
             "progress_by_run": progress_by_run,
             "reviewers": cfg.reviewers,
             "current_reviewer": reviewer or "",
+            "t": t,
         },
     )
 
@@ -167,6 +161,7 @@ async def hotel_list(
     elif filter == "done":
         hotels = [h for h in hotels if h["complete"]]
 
+    t = _t(cfg, effective_reviewer)
     return _templates(request).TemplateResponse(
         request,
         "list.html",
@@ -177,6 +172,7 @@ async def hotel_list(
             "reviewers": cfg.reviewers,
             "filter": filter,
             "counts": counts,
+            "t": t,
         },
     )
 
@@ -228,8 +224,9 @@ async def review_hotel(
     prev_id = trace_ids[idx - 1] if idx > 0 else None
     next_id = trace_ids[idx + 1] if idx < len(trace_ids) - 1 else None
 
+    t = _t(cfg, effective_reviewer)
     judge_scores = {s.name: s for s in detail.scores}
-    rubriques = list(RUBRIQUES_LABELS.items())
+    rubriques = list(t["rubriques"].items())
 
     return _templates(request).TemplateResponse(
         request,
@@ -249,6 +246,7 @@ async def review_hotel(
             "fiche_total": len(trace_ids),
             "prev_id": prev_id,
             "next_id": next_id,
+            "t": t,
         },
     )
 
@@ -272,7 +270,7 @@ async def save_vote(request: Request, payload: VotePayload, response: Response):
     cfg = _cfg(request)
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
         raise HTTPException(
-            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
+            status_code=403, detail=_t(cfg, payload.reviewer)["error_reviewer_unknown"]
         )
     storage.save_vote(
         votes_path=cfg.votes_csv_path,
@@ -301,15 +299,12 @@ class CommentPayload(BaseModel):
 
 @router.post("/comment", status_code=201)
 async def post_comment(request: Request, payload: CommentPayload):
-    if not payload.text.strip():
-        raise HTTPException(
-            status_code=422, detail="Le commentaire ne peut pas être vide."
-        )
     cfg = _cfg(request)
+    t = _t(cfg, payload.reviewer)
+    if not payload.text.strip():
+        raise HTTPException(status_code=422, detail=t["error_comment_empty"])
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
-        raise HTTPException(
-            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
-        )
+        raise HTTPException(status_code=403, detail=t["error_reviewer_unknown"])
     comment_id = storage.add_comment(
         comments_path=cfg.comments_csv_path,
         run_name=payload.run_name,
@@ -347,7 +342,7 @@ async def toggle_like(request: Request, payload: LikePayload):
     cfg = _cfg(request)
     if not payload.reviewer or payload.reviewer not in cfg.reviewers:
         raise HTTPException(
-            status_code=403, detail="Reviewer non reconnu. Sélectionnez votre nom."
+            status_code=403, detail=_t(cfg, payload.reviewer)["error_reviewer_unknown"]
         )
     liked, likers = storage.toggle_like(
         likes_path=cfg.likes_csv_path,

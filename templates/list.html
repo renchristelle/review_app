@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 
-{% block title %}{{ run_name }} — Revue Fiches Client{% endblock %}
+{% block title %}{{ run_name }} — {{ t.app_title }}{% endblock %}
 
 {% block content %}
 <div class="list-page">
   <div class="list-header">
-    <a href="/" class="back-link">← Tous les runs</a>
+    <a href="/" class="back-link">{{ t.list_back }}</a>
     <h1 class="list-header__title">{{ run_name }}</h1>
     {% if current_reviewer %}
     <span class="reviewer-badge">{{ current_reviewer }}</span>
@@ -15,20 +15,20 @@
   <div class="filter-bar">
     <a href="?reviewer={{ current_reviewer }}&filter=all"
        class="filter-btn {% if filter == 'all' %}filter-btn--active{% endif %}">
-      Tous ({{ counts.all }})
+      {{ t.list_filter_all }} ({{ counts.all }})
     </a>
     <a href="?reviewer={{ current_reviewer }}&filter=todo"
        class="filter-btn {% if filter == 'todo' %}filter-btn--active{% endif %}">
-      À noter ({{ counts.todo }})
+      {{ t.list_filter_todo }} ({{ counts.todo }})
     </a>
     <a href="?reviewer={{ current_reviewer }}&filter=done"
        class="filter-btn {% if filter == 'done' %}filter-btn--active{% endif %}">
-      Notés ({{ counts.done }})
+      {{ t.list_filter_done }} ({{ counts.done }})
     </a>
   </div>
 
   {% if not current_reviewer %}
-  <div class="alert alert--blocking">⚠ Sélectionnez votre nom (« Je suis : ») pour voir et enregistrer vos votes.</div>
+  <div class="alert alert--blocking">{{ t.list_alert_no_reviewer }}</div>
   {% endif %}
 
   {% if hotels %}
@@ -38,9 +38,9 @@
       <a href="/{{ run_name }}/{{ hotel.trace_id }}?reviewer={{ current_reviewer }}" class="hotel-card__link">
         <div class="hotel-card__status">
           {% if hotel.complete %}
-          <span class="status-icon status-icon--done" title="Noté">✓</span>
+          <span class="status-icon status-icon--done" title="{{ t.list_status_done_title }}">✓</span>
           {% else %}
-          <span class="status-icon status-icon--todo" title="À noter">○</span>
+          <span class="status-icon status-icon--todo" title="{{ t.list_status_todo_title }}">○</span>
           {% endif %}
         </div>
         <div class="hotel-card__info">
@@ -60,7 +60,7 @@
   </ul>
   {% else %}
   <div class="empty-state">
-    <p>Aucune fiche{% if filter != 'all' %} dans ce filtre{% endif %}.</p>
+    <p>{% if filter != 'all' %}{{ t.list_empty_filtered }}{% else %}{{ t.list_empty }}{% endif %}.</p>
   </div>
   {% endif %}
 </div>
