@@ -40,8 +40,11 @@ def _fmt_list(items: list | None) -> str:
     return "\n".join(f"- {item}" for item in items)
 
 
-def _make_label(trace_id: str) -> str:
+def _make_label(trace_id: str, metadata: dict | None = None) -> str:
     """Construit un libellé lisible pour identifier la fiche client."""
+    client_id = (metadata or {}).get("client_id", "")
+    if client_id:
+        return f"Contact_{client_id}"
     return f"Fiche_{trace_id}"
 
 
@@ -131,7 +134,7 @@ class LangfuseReader:
                 TraceSummary(
                     trace_id=t.id,
                     run_name=run_name,
-                    label=_make_label(t.id),
+                    label=_make_label(t.id, t.metadata),
                 )
             )
         return result
@@ -155,7 +158,7 @@ class LangfuseReader:
 
         return TraceDetail(
             trace_id=trace_id,
-            label=_make_label(trace_id),
+            label=_make_label(trace_id, raw.metadata),
             # Input : fiche originale
             meteo_input=cr.get("meteo") or "",
             person_input=cr.get("person") or "",
