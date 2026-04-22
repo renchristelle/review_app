@@ -70,9 +70,9 @@
           </p>
         </div>
         {% endfor %}
-        {% if detail.demands_input %}
         <div class="sources-col">
           <h3 class="sources-col__title">{{ t.review_demands }}</h3>
+          {% if detail.demands_input %}
           {% for demand in detail.demands_input %}
           <div class="sources-col__demand">
             <p class="sources-col__text" style="white-space: pre-wrap;"><strong>{{ t.review_demand_project }}</strong> {% if demand.project %}{{ demand.project }}{% else %}<em class="muted">{{ t.review_not_filled }}</em>{% endif %}</p>
@@ -80,8 +80,12 @@
           </div>
           {% if not loop.last %}<hr class="sources-col__divider">{% endif %}
           {% endfor %}
+          {% else %}
+          <p class="sources-col__text" style="white-space: pre-wrap;">
+            <em class="muted">{{ t.review_not_filled }}</em>
+          </p>
+          {% endif %}
         </div>
-        {% endif %}
       </div>
     </aside>
 
@@ -254,7 +258,7 @@ function reviewPage(initAllVotes, initMyVote, initComments, reviewer, runName, t
     comments: initComments,   // {rubrique: [{comment_id, reviewer, text, created_at, likes:[]}]}
     newComment: {},           // {rubrique: string}
     saved: {},
-    sourcesOpen: false,
+    sourcesOpen: true,
     reviewer,
 
     votedCount() {
