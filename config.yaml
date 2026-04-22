@@ -1,3 +1,5 @@
+show_judge_block: false
+
 reviewers:
   - name: Christelle Ren
     sessions:

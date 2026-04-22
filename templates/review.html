@@ -89,6 +89,7 @@
     <div class="main-col">
 
   {# ── SCORES DU JUGE ─────────────────────────────────────────────────────── #}
+  {% if show_judge_block %}
   <div class="judge-block">
     <h2 class="judge-block__title">{{ t.review_judge_title }}</h2>
     <div class="judge-scores">
@@ -110,6 +111,7 @@
       {% endfor %}
     </div>
   </div>
+  {% endif %}
 
   {# ── RUBRIQUES ──────────────────────────────────────────────────────────── #}
   {% for key, label in rubriques %}

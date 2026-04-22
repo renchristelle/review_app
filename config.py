@@ -23,6 +23,7 @@ class AppConfig:
     reviewers: list[str]
     reviewer_sessions: dict[str, frozenset[str]]
     test_run_names: frozenset[str] | None
+    show_judge_block: bool
     langfuse_public_key: str
     langfuse_secret_key: str
     langfuse_host: str
@@ -70,6 +71,7 @@ def load_config() -> AppConfig:
         reviewers=reviewer_names,
         reviewer_sessions=reviewer_sessions,
         test_run_names=test_run_names,
+        show_judge_block=bool(raw.get("show_judge_block", True)),
         langfuse_public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
         langfuse_secret_key=os.environ["LANGFUSE_SECRET_KEY"],
         langfuse_host=os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com"),

@@ -239,6 +239,7 @@ async def review_hotel(
             "my_vote": my_vote,
             "comments_by_rubrique": comments_json,
             "judge_scores": judge_scores,
+            "show_judge_block": cfg.show_judge_block,
             "rubriques": rubriques,
             "current_reviewer": effective_reviewer,
             "reviewers": cfg.reviewers,

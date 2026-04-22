@@ -78,8 +78,8 @@ TRANSLATIONS: dict[str, dict] = {
     },
     "en": {
         "lang": "en",
-        "app_title": "Customer File Review",
-        "page_title_login": "Login — Customer File Review",
+        "app_title": "Client Profile Review",
+        "page_title_login": "Login — Client Profile Review",
         "nav_i_am": "I am:",
         "nav_choose": "— choose —",
         "nav_logout": "Logout",

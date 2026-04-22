@@ -149,15 +149,7 @@ class LangfuseReader:
         inp = raw.input or {}
         cr = _client_record(inp)
 
-        scores = []
-        for s in raw.scores or []:
-            scores.append(
-                JudgeScore(
-                    name=s.name,
-                    value=float(s.value),
-                    comment=s.comment or "",
-                )
-            )
+        scores = self._fetch_scores(trace_id)
 
         merge = self._get_merge_output(trace_id)
 
@@ -186,6 +178,23 @@ class LangfuseReader:
             needs=merge.get("needs", ""),
             scores=scores,
         )
+
+    def _fetch_scores(self, trace_id: str) -> list[JudgeScore]:
+        """Récupère les scores via l'endpoint dédié pour avoir les commentaires."""
+        try:
+            resp = self._lf.score.get_many(trace_id=trace_id, limit=50)
+            raw_scores = resp.data or []
+        except Exception:
+            return []
+        return [
+            JudgeScore(
+                name=s.name,
+                value=float(s.value),
+                comment=s.comment or "",
+            )
+            for s in raw_scores
+            if s.value is not None
+        ]
 
     def _get_merge_output(self, trace_id: str) -> dict[str, str]:
         """Extrait le MergeModelOutput depuis les observations Langfuse.
