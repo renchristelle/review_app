@@ -23,7 +23,7 @@ class AppConfig:
     reviewers: list[str]
     reviewer_sessions: dict[str, frozenset[str]]
     test_run_names: frozenset[str] | None
-    show_judge_block: bool
+    judge_reviewers: frozenset[str]
     langfuse_public_key: str
     langfuse_secret_key: str
     langfuse_host: str
@@ -42,6 +42,9 @@ class AppConfig:
     def allowed_sessions_for(self, reviewer: str) -> frozenset[str]:
         """Retourne les sessions autorisées pour un reviewer. Vide = pas de restriction."""
         return self.reviewer_sessions.get(reviewer, frozenset())
+
+    def can_see_judge_scores(self, reviewer: str) -> bool:
+        return reviewer in self.judge_reviewers
 
 
 def load_config() -> AppConfig:
@@ -66,12 +69,14 @@ def load_config() -> AppConfig:
     all_sessions = frozenset().union(*reviewer_sessions.values()) if reviewer_sessions else frozenset()
     test_run_names = all_sessions if all_sessions else None
 
+    judge_reviewers = frozenset(str(r).strip() for r in raw.get("judge_reviewers", []))
+
     reviews_dir = ROOT / "data" / "reviews"
     return AppConfig(
         reviewers=reviewer_names,
         reviewer_sessions=reviewer_sessions,
         test_run_names=test_run_names,
-        show_judge_block=bool(raw.get("show_judge_block", True)),
+        judge_reviewers=judge_reviewers,
         langfuse_public_key=os.environ["LANGFUSE_PUBLIC_KEY"],
         langfuse_secret_key=os.environ["LANGFUSE_SECRET_KEY"],
         langfuse_host=os.environ.get("LANGFUSE_HOST", "https://cloud.langfuse.com"),

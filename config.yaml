@@ -1,4 +1,6 @@
-show_judge_block: false
+judge_reviewers:
+  - Christelle Ren
+  - Pito Nadal
 
 reviewers:
   - name: Christelle Ren
