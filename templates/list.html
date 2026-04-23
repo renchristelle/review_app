@@ -53,6 +53,9 @@
           <div class="mini-progress">
             <div class="mini-progress__fill" style="width: {{ (hotel.nb_voted / hotel.total * 100) | int }}%"></div>
           </div>
+          {% if hotel.voters %}
+          <span class="hotel-card__count">{{ t.list_voters_label }} {{ hotel.voters | join(', ') }}</span>
+          {% endif %}
         </div>
       </a>
     </li>

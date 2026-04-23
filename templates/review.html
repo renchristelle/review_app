@@ -39,7 +39,7 @@
 
       <div class="review-header__actions">
         <span class="review-header__score-badge" x-text="votedCount() + '/{{ rubriques | length }}'"></span>
-        <button @click="sourcesOpen = !sourcesOpen" class="btn-toggle"
+<button @click="sourcesOpen = !sourcesOpen" class="btn-toggle"
                 :class="sourcesOpen ? 'btn-toggle--active' : ''">
           {{ t.review_sources_btn }}
         </button>

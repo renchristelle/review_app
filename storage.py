@@ -140,6 +140,16 @@ def get_votes(votes_path: Path, run_name: str, reviewer: str) -> dict[str, dict[
     return result
 
 
+def get_voters_per_hotel(votes_path: Path, run_name: str) -> dict[str, list[str]]:
+    """Retourne {trace_id: [reviewer, ...]} — reviewers ayant voté au moins une rubrique."""
+    data: dict[str, set[str]] = {}
+    for row in _read(votes_path):
+        if row.get("run_name") != run_name:
+            continue
+        data.setdefault(row["trace_id"], set()).add(row["reviewer"])
+    return {tid: sorted(reviewers) for tid, reviewers in data.items()}
+
+
 def get_all_progress(votes_path: Path, run_name: str, trace_ids: list[str]) -> dict[str, dict]:
     """Retourne {reviewer: {completed, total}} pour le dashboard."""
     data: dict[str, dict[str, set]] = {}

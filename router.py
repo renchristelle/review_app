@@ -133,6 +133,7 @@ async def hotel_list(
     traces = _reader(request).get_run_traces(run_name)
 
     votes = storage.get_votes(cfg.votes_csv_path, run_name, effective_reviewer)
+    voters_per_hotel = storage.get_voters_per_hotel(cfg.votes_csv_path, run_name)
 
     all_complete = [
         len(votes.get(t.trace_id, {})) >= len(storage.RUBRIQUES) for t in traces
@@ -153,6 +154,7 @@ async def hotel_list(
                 "nb_voted": nb_voted,
                 "total": len(storage.RUBRIQUES),
                 "complete": complete,
+                "voters": voters_per_hotel.get(t.trace_id, []),
             }
         )
 

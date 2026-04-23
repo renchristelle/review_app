@@ -220,7 +220,6 @@ code { font-family: monospace; background: #edf2f7; padding: 1px 5px; border-rad
 .hotel-card__progress { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; }
 .hotel-card__count { font-size: .8rem; color: var(--color-muted); }
 .hotel-card__count--done { color: var(--color-ok); font-weight: 600; }
-
 .mini-progress {
   width: 80px; height: 4px; background: #e2e8f0;
   border-radius: 99px; overflow: hidden;
@@ -256,7 +255,6 @@ code { font-family: monospace; background: #edf2f7; padding: 1px 5px; border-rad
   font-size: .8rem; font-weight: 600;
   background: #edf2f7; padding: .2rem .6rem; border-radius: 99px;
 }
-
 .nav-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
