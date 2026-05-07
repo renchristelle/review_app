@@ -8,6 +8,7 @@ Utilise LangfuseAPI (SDK v4).
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 
 from langfuse.api import LangfuseAPI
@@ -109,6 +110,9 @@ class LangfuseReader:
             password=secret_key,
         )
         self._allowed_run_names = allowed_run_names
+        self._traces_cache = None
+        self._traces_cache_time = 0
+        self._cache_ttl = 300  # 5 minutes
 
     def list_runs(self) -> list[dict]:
         """Retourne les runs uniques triés par nom, avec le nombre de traces."""
@@ -264,7 +268,14 @@ class LangfuseReader:
         return {}
 
     def _fetch_all_eval_traces(self):
-        """Pagine toutes les traces d'évaluation (metadata.run_name présent)."""
+        """Pagine toutes les traces d'évaluation (metadata.run_name présent).
+
+        Cache les résultats pour éviter les appels API répétés lors de la navigation.
+        """
+        now = time.time()
+        if self._traces_cache is not None and (now - self._traces_cache_time) < self._cache_ttl:
+            return self._traces_cache
+
         page, all_traces = 1, []
         while True:
             resp = self._lf.trace.list(
@@ -283,4 +294,7 @@ class LangfuseReader:
                 for t in out
                 if (t.metadata or {}).get("run_name") in self._allowed_run_names
             ]
+
+        self._traces_cache = out
+        self._traces_cache_time = now
         return out
