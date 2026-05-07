@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from review_app import storage
 from review_app.auth import make_session_token
-from review_app.translations import get_translations
+from review_app.translations import get_translations, get_rubriques
 
 router = APIRouter()
 
@@ -135,8 +135,9 @@ async def hotel_list(
     votes = storage.get_votes(cfg.votes_csv_path, run_name, effective_reviewer)
     voters_per_hotel = storage.get_voters_per_hotel(cfg.votes_csv_path, run_name)
 
+    rubriques = get_rubriques(run_name)
     all_complete = [
-        len(votes.get(t.trace_id, {})) >= len(storage.RUBRIQUES) for t in traces
+        len(votes.get(t.trace_id, {})) >= len(rubriques) for t in traces
     ]
     counts = {
         "all": len(traces),
@@ -152,7 +153,7 @@ async def hotel_list(
                 "trace_id": t.trace_id,
                 "label": t.label,
                 "nb_voted": nb_voted,
-                "total": len(storage.RUBRIQUES),
+                "total": len(rubriques),
                 "complete": complete,
                 "voters": voters_per_hotel.get(t.trace_id, []),
             }

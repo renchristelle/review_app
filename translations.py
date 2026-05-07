@@ -242,3 +242,14 @@ def get_language(sessions: frozenset[str]) -> str:
 
 def get_translations(sessions: frozenset[str]) -> dict:
     return TRANSLATIONS[get_language(sessions)]
+
+
+def get_language_from_run(run_name: str) -> str:
+    """Extrait la langue du run_name basé sur le préfixe (en-, de-, fr-)."""
+    return run_name[:2]
+
+
+def get_rubriques(run_name: str) -> list[str]:
+    """Retourne les rubriques pour la langue du run."""
+    lang = get_language_from_run(run_name)
+    return list(TRANSLATIONS[lang]["rubriques"].keys())

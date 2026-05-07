@@ -9,21 +9,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 
-RUBRIQUES = [
-    "commercial",
-    "pro",
-    "perso",
-    "health",
-    "languages",
-    "security",
-    "air",
-    "car",
-    "housing",
-    "rythme",
-    "activities",
-    "good_to_know_travel",
-    "needs",
-]
+from review_app.translations import get_rubriques
 
 _VOTES_FIELDS = ["run_name", "trace_id", "hotel_name", "reviewer", "rubrique", "vote", "saved_at"]
 _COMMENTS_FIELDS = [
@@ -158,11 +144,12 @@ def get_all_progress(votes_path: Path, run_name: str, trace_ids: list[str]) -> d
             continue
         data.setdefault(row["reviewer"], {}).setdefault(row["trace_id"], set()).add(row["rubrique"])
 
+    rubriques = get_rubriques(run_name)
     total = len(trace_ids)
     return {
         reviewer: {
             "completed": sum(
-                1 for tid in trace_ids if len(hotel_map.get(tid, set())) >= len(RUBRIQUES)
+                1 for tid in trace_ids if len(hotel_map.get(tid, set())) >= len(rubriques)
             ),
             "total": total,
         }
