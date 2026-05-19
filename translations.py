@@ -218,7 +218,7 @@ TRANSLATIONS: dict[str, dict] = {
             "perso": "Persönliches",
             "health": "Gesundheit / Ernährung",
             "languages": "Sprachen",
-            "security": "Sicherheit",
+            "security": "Formalitäten",
             "air": "Flüge",
             "car": "Transport / Auto",
             "housing": "Unterkunft",
@@ -246,7 +246,8 @@ def get_translations(sessions: frozenset[str]) -> dict:
 
 def get_language_from_run(run_name: str) -> str:
     """Extrait la langue du run_name basé sur le préfixe (en-, de-, fr-)."""
-    return run_name[:2]
+    lang = run_name[:2]
+    return lang if lang in TRANSLATIONS else "fr"
 
 
 def get_rubriques(run_name: str) -> list[str]:
