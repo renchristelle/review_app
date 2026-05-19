@@ -7,6 +7,10 @@ reviewers:
     sessions:
   - name: Pito Nadal
     sessions:
+      - claude-sonnet-4-6_claude-sonnet-4-6_claude-sonnet-4-6
+      - claude-haiku-4-5_claude-haiku-4-5_claude-sonnet-4-6
+      - gemini-3-flash-preview_gemini-3-flash-preview_claude-sonnet-4-6
+      - gpt-5.4-mini_gpt-5.4-mini_claude-sonnet-4-6
   - name: Natalia Isachenko
     sessions:
   - name: Julien Bernard
@@ -15,44 +19,58 @@ reviewers:
   - name: Elsa Belhomme
     sessions:
       - fr-FR_evaluation_1
+      - fr-FR_evaluation_2      
   - name: Cécile Seyier
     sessions:
       - fr-FR_evaluation_1
+      - fr-FR_evaluation_2
   - name: Christine Graffard
     sessions:
       - fr-FR_evaluation_1
+      - fr-FR_evaluation_2
 
   - name: Cataldino Lacorte-Gloor
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name: Jasmine Armuzzi
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name: Nadine Baertschi
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name: Samira Steriti
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name: Silvia Casanova
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name:  Nahema Graf
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
   - name:  Nadege Augier
     sessions:
       - de-CH_evaluation_1
+      - de-CH_evaluation_2
       
   - name: Jacqui Brooks
     sessions:
       - en-GB_evaluation_1
+      - en-GB_evaluation_2    
   - name: Alesha Walton
     sessions:
       - en-GB_evaluation_1
+      - en-GB_evaluation_2
   - name: Emily Rister
     sessions:
       - en-GB_evaluation_1
+      - en-GB_evaluation_2
   - name: Lucy Bailey
     sessions:
       - en-GB_evaluation_1
+      - en-GB_evaluation_2
