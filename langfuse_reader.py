@@ -277,15 +277,17 @@ class LangfuseReader:
             return self._traces_cache
 
         page, all_traces = 1, []
-        while True:
-            resp = self._lf.trace.list(
-                name="enrich-client-record-dev", page=page, limit=50
-            )
-            batch = resp.data or []
-            all_traces.extend(batch)
-            if len(batch) < 50:
-                break
-            page += 1
+        for trace_name in ("enrich-client-record-dev", "enrich-client-record-model"):
+            page = 1
+            while True:
+                resp = self._lf.trace.list(
+                    name=trace_name, page=page, limit=50
+                )
+                batch = resp.data or []
+                all_traces.extend(batch)
+                if len(batch) < 50:
+                    break
+                page += 1
 
         out = [t for t in all_traces if (t.metadata or {}).get("run_name")]
         if self._allowed_run_names is not None:
